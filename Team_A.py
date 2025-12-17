@@ -1,5 +1,8 @@
 #This is the base
 import random
+def player_name():
+    return input("Enter your player name: ").strip()
+
 DAY = 1
 health = 100
 warmth = 100
@@ -46,5 +49,15 @@ def create_player(name):
         # Meta
         "events_log": []         # List of strings describing what happened
     }
-def player_name():
-    return input("Enter your player name: ").strip()
+#Display Status Function Done
+    def dispaly_status(player):
+        print(DAY)
+        print("Health:", Health)
+        print("Warmth:", Warmth)
+        print("Hunger:", Hunger)
+        print("Thirst:", Thirs)
+        print(inventory)
+        print(weather)
+        
+        
+    
