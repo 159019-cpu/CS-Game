@@ -12,7 +12,7 @@ choice = input("choose")
 
 if choice == 1:
     health = health - random.randint(10,15)
-def create_player_template(name):
+def create_player(name):
     """Returns a fresh player dictionary - Team A should implement this"""
     return {
         "name": name,
