@@ -1,1 +1,232 @@
-print("hello)
+import random
+
+# -----------------------------
+# Helper Utilities
+# -----------------------------
+
+def clamp(value, minimum=0):
+    return max(minimum, value)
+
+
+def has_tool(player, tool):
+    return tool in player.get('tools', [])
+
+
+# -----------------------------
+# Random Events (20% chance)
+# -----------------------------
+
+def random_event(player):
+    events = []
+
+    def wolf_attack():
+        dmg = 10 if has_tool(player, 'spear') else 20
+        player['health'] -= dmg
+        print(f"🐺 Wolf attack! You lose {dmg} health.")
+
+    def abandoned_backpack():
+        for res in random.sample(['wood', 'food', 'water'], 3):
+            player['inventory'][res] += 1
+        print("🎒 You find an abandoned backpack with supplies!")
+
+    def injury():
+        player['health'] -= 15
+        print("🤕 You slip and injure yourself (-15 health).")
+
+    def dry_tinder():
+        player['inventory']['wood'] += 5
+        print("🔥 You find dry tinder (+5 wood).")
+
+    def frozen_traveler():
+        player['inventory']['cloth'] += 5
+        player['inventory']['food'] += 2
+        print("💀 You find a frozen traveler... useful supplies recovered.")
+
+    def clear_patch():
+        player['warmth'] += 10
+        print("☀️ A clear patch shelters you (+10 warmth).")
+
+    events = [wolf_attack, abandoned_backpack, injury, dry_tinder, frozen_traveler, clear_patch]
+
+    if random.random() < 0.20:
+        random.choice(events)()
+
+
+# -----------------------------
+# Gathering Core Logic
+# -----------------------------
+
+def success_check(player, base=0.70):
+    weather = player['weather']
+    modifier = 0
+
+    if weather == 'snowing':
+        modifier -= 0.10
+    elif weather == 'blizzard':
+        modifier -= 0.30
+
+    return random.random() < max(0, base + modifier)
+
+
+def gather_wood(player):
+    chance = 0.70
+    bonus = 1
+
+    if has_tool(player, 'axe'):
+        chance += 0.20
+        bonus += 2
+
+    if player['weather'] == 'blizzard':
+        chance -= 0.30
+
+    if random.random() < chance:
+        player['inventory']['wood'] += bonus
+        print(f"🌲 You gather {bonus} wood.")
+    else:
+        player['warmth'] -= 5
+        print("❌ Failed to gather wood (-5 warmth).")
+
+    random_event(player)
+
+
+def gather_food(player):
+    chance = 0.70
+
+    if has_tool(player, 'spear'):
+        chance += 0.20
+
+    if player['weather'] == 'blizzard':
+        chance -= 0.30
+
+    if random.random() < chance:
+        player['inventory']['food'] += 1
+        print("🍖 You find food.")
+    else:
+        player['warmth'] -= 5
+        print("❌ You fail to find food (-5 warmth).")
+
+    random_event(player)
+
+
+def gather_water(player):
+    chance = 0.70
+
+    if player['weather'] == 'blizzard':
+        chance -= 0.30
+
+    if random.random() < chance:
+        player['inventory']['water'] += 1
+        print("💧 You collect fresh water.")
+    else:
+        player['warmth'] -= 5
+        print("❌ You fail to find water (-5 warmth).")
+
+    random_event(player)
+
+
+def scavenge(player):
+    chance = 0.70
+
+    if player['weather'] == 'blizzard':
+        chance -= 0.30
+
+    if random.random() < chance:
+        res = random.choice(['wood', 'food', 'water'])
+        player['inventory'][res] += 1
+        print(f"🔍 You scavenge and find {res}.")
+    else:
+        player['warmth'] -= 5
+        print("❌ You find nothing (-5 warmth).")
+
+    random_event(player)
+
+
+def gather_menu(player):
+    options = {
+        '1': gather_wood,
+        '2': gather_food,
+        '3': gather_water,
+        '4': scavenge
+    }
+
+    print("\nChoose a gathering action:")
+    print("1. Gather Wood")
+    print("2. Gather Food")
+    print("3. Gather Water")
+    print("4. Scavenge")
+
+    choice = input("> ")
+    if choice in options:
+        options[choice](player)
+    else:
+        print("Invalid choice.")
+
+
+# -----------------------------
+# Weather System
+# -----------------------------
+
+WEATHER_ORDER = ['clear', 'snowing', 'blizzard']
+
+
+def advance_weather(player):
+    roll = random.random()
+    current = player['weather']
+
+    if roll < 0.50:
+        new_weather = current
+    elif roll < 0.80:
+        idx = WEATHER_ORDER.index(current)
+        shift = random.choice([-1, 1])
+        new_weather = WEATHER_ORDER[min(max(idx + shift, 0), 2)]
+    else:
+        new_weather = 'fog'
+
+    player['weather'] = new_weather
+
+    if new_weather == 'clear':
+        player['temperature'] = random.randint(-5, 5)
+    elif new_weather == 'snowing':
+        player['temperature'] = random.randint(-15, -5)
+    elif new_weather == 'blizzard':
+        player['temperature'] = random.randint(-25, -15)
+    else:
+        player['temperature'] = random.randint(-10, 0)
+
+
+def describe_weather(player):
+    weather = player['weather']
+    temp = player['temperature']
+
+    descriptions = {
+        'clear': "The sky is clear and bitterly cold.",
+        'snowing': "Snow falls steadily, muffling the world.",
+        'blizzard': "A howling blizzard tears at your clothes.",
+        'fog': "Thick fog limits your vision."
+    }
+
+    return f"{descriptions[weather]} ({temp}°C)"
+
+
+def apply_weather_damage(player):
+    drain = {
+        'clear': 5,
+        'snowing': 10,
+        'blizzard': 20,
+        'fog': 8
+    }[player['weather']]
+
+    protection = 0
+    if player.get('fire', False):
+        protection += 15
+    protection += player.get('shelter', 0) * 10
+
+    net = max(0, drain - protection)
+    player['warmth'] -= net
+
+    if player['temperature'] < -20:
+        player['health'] -= 5
+        print("🥶 Frostbite sets in (-5 health).")
+
+    player['warmth'] = clamp(player['warmth'])
+    player['health'] = clamp(player['health'])
