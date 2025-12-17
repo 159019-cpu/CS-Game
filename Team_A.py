@@ -46,3 +46,5 @@ def create_player(name):
         # Meta
         "events_log": []         # List of strings describing what happened
     }
+def player_name():
+    return input("Enter your player name: ").strip()
