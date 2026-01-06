@@ -1,15 +1,7 @@
-# =====================================================
-# 🏕️ WILDERNESS SURVIVAL — TEAM A CORE
-# Base Camp + Game Loop
-# =====================================================
-
 import json
 import sys
 
-# =====================================================
-# PLAYER CREATION
-# =====================================================
-
+# Player Creation
 def create_player(name: str) -> dict:
     return {
         "name": name,
@@ -36,20 +28,12 @@ def create_player(name: str) -> dict:
         "events_log": []
     }
 
-
-# =====================================================
-# EVENT LOGGER
-# =====================================================
-
+# Event Logger
 def add_event(player: dict, message: str):
     entry = f"Day {player['day']}: {message}"
     player["events_log"].append(entry)
 
-
-# =====================================================
-# STATUS DISPLAY
-# =====================================================
-
+# Status Display
 def display_status(player: dict):
     print("\n" + "=" * 50)
     print(f"🏕️  DAY {player['day']}  |  Survivor: {player['name']}")
@@ -85,10 +69,7 @@ def display_status(player: dict):
     print("=" * 50)
 
 
-# =====================================================
-# MAIN MENU
-# =====================================================
-
+# Main Menu
 def main_menu(player: dict) -> str:
     print("\nChoose an action:")
     print("1) Go gathering")
@@ -100,11 +81,7 @@ def main_menu(player: dict) -> str:
 
     return input("> ").strip()
 
-
-# =====================================================
-# DAILY DRAIN
-# =====================================================
-
+# Daily Drain
 def apply_daily_drain(player: dict, warmth_modifier: int = 0):
     player["hunger"] -= 10
     player["thirst"] -= 15
@@ -115,11 +92,7 @@ def apply_daily_drain(player: dict, warmth_modifier: int = 0):
 
     add_event(player, "The day ends. Hunger, thirst and warmth decreased.")
 
-
-# =====================================================
-# SURVIVAL CHECK
-# =====================================================
-
+# Survival Check
 def check_alive(player: dict) -> bool:
     for stat in ("health", "hunger", "thirst", "warmth"):
         if player[stat] <= 0:
@@ -129,11 +102,7 @@ def check_alive(player: dict) -> bool:
             return False
     return True
 
-
-# =====================================================
-# SAVE / LOAD
-# =====================================================
-
+# Save Game
 def save_game(player: dict, filename: str):
     with open(filename, "w") as f:
         json.dump(player, f, indent=2)
@@ -145,24 +114,20 @@ def load_game(filename: str) -> dict:
     print("📂 Game loaded.")
     return player
 
-
-# =====================================================
-# MAIN GAME LOOP
-# =====================================================
-
+# Main Game Loop
 def game_loop(player: dict):
     while player["alive"]:
         display_status(player)
         choice = main_menu(player)
 
         if choice == "1":
-            # -------- Team B Hook --------
+            # Team B
             print("\n🔍 You go gathering...")
             add_event(player, "Went gathering.")
             # Team B will modify inventory & weather
 
         elif choice == "2":
-            # -------- Team C Hook --------
+            # Team C
             print("\n🔨 You work on crafting/building...")
             add_event(player, "Crafted or built structures.")
             # Team C will update shelter/fire
@@ -187,7 +152,7 @@ def game_loop(player: dict):
             print("❌ Invalid choice.")
             continue
 
-        # ---- End of Day ----
+        # End of Day
         apply_daily_drain(player)
 
         if not check_alive(player):
@@ -195,11 +160,7 @@ def game_loop(player: dict):
 
         player["day"] += 1
 
-
-# =====================================================
-# ENTRY POINT
-# =====================================================
-
+# Entry Point
 def main():
     print("\n🏕️  WILDERNESS SURVIVAL\n")
 
